@@ -3,38 +3,59 @@ const app = express();
 const port = 3000;
 const users = require("./routes/user.js");
 const posts = require("./routes/post.js");
-const cookieParser = require("cookie-parser");
+const session = require("express-session");
+const flash = require("connect-flash");
+const path = require("path");
 
-app.use(cookieParser("secretcode"));
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-app.get("/getsignedcookie", (req,res) => {
-    res.cookie("made-in", "India", {signed: true});
-    res.send("signed cookie sent!");
+const sessionOptions = {
+    secret: 'mysupersecretstring',
+    resave: false,
+    saveUninitialized: true,
+};
+
+app.use(session(sessionOptions));
+app.use(flash());
+
+app.use((req,res,next) => {
+    res.locals.successMsg = req.flash("success");
+    res.locals.errorMsg = req.flash("error");
+    next();
 });
 
-app.get("/verify", (req,res) => {
-    console.log(req.signedCookies);
-    res.send("verified!");
+app.get("/register", (req,res) => {
+    // console.log(req.session);
+    let {name = "anonymous"} = req.query;
+    req.session.name = name;
+    console.log(req.session.name);
+    
+    if(name === "anonymous") {
+        req.flash("error", "user not registered!");
+    } else {
+        req.flash("success", "user registered successfully");
+    }
+    res.redirect("/hello");
 });
 
-app.get("/greet", (req,res) => {
-    let {name = "anonymous"} = req.cookies;
-    res.send(`Hi, I am ${name}`);
+app.get("/hello", (req,res) => {
+    // console.log(req.flash("success"));
+    res.render("page.ejs", {name : req.session.name});
 });
 
-app.get("/getcookies", (req,res) => {
-    res.cookie("greet", "hello");
-    res.cookie("madeIn", "India");
-    res.send("sent you some cookies!");
-});
+// app.get('/reqcount', (req,res) => {
+//     if(req.session.count) {
+//         req.session.count++;
+//     } else {
+//         req.session.count = 1;
+//     }
+//     res.send(`You sent a request ${req.session.count}  times!`)
+// });
 
-app.get("/", (req,res) => {
-    console.dir(req.cookies);
-    res.send("Hi, I am root!");
-});
-
-app.use("/users", users);
-app.use("/posts", posts);
+// app.get("/test", (req,res) => {
+//     res.send("test successful!")
+// });
 
 app.listen(port, () => {
     console.log(`Server is listening at ${port}`);
