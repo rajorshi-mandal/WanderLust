@@ -7,6 +7,9 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const session = require("express-session");
 const flash = require("connect-flash");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const User = require("./models/user.js");
 const port = 8080;
 
 const sessionOptions = {
@@ -27,8 +30,18 @@ app.get("/", (req,res) => {
 app.use(session(sessionOptions));
 app.use(flash());
 
-const listings = require("./routes/listing.js");
-const reviews = require("./routes/review.js");
+//passport needs session
+app.use(passport.initialize());
+app.use(passport.session());
+// use static authenticate method of model in LocalStrategy
+passport.use(new LocalStrategy(User.authenticate()));
+// use static serialize and deserialize of model for passport session support
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+const listingsRouter = require("./routes/listing.js");
+const reviewsRouter = require("./routes/review.js");
+const userRouter = require("./routes/user.js");
 
 const MONGO_URL = 'mongodb://127.0.0.1:27017/wanderlust';
 async function main() {
@@ -55,9 +68,20 @@ app.use((req,res,next) => {
     next();
 });
 
+// app.get("/demouser", async (req,res) => {
+//     let fakeuser = new User({
+//         email : "student@gmail.com",
+//         username: "delta-student",
+//     });
+
+//     let registeredUser = await User.register(fakeuser, "helloworld");
+//     res.send(registeredUser);
+// });
+
 //routes
-app.use("/listings", listings);
-app.use("/listings/:id/reviews", reviews);
+app.use("/listings", listingsRouter);
+app.use("/listings/:id/reviews", reviewsRouter);
+app.use("/", userRouter);
 
 //error handling for visiting route that doesn't exist
 app.all("*",(req,res,next) => {
