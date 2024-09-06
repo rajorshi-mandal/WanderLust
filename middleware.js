@@ -10,7 +10,14 @@ module.exports.isLoggedIn = (req,res,next) => {
     if(!req.isAuthenticated()) {
         //redirect url
         req.session.redirectUrl = req.originalUrl;
-        req.flash("error", "You must be logged in to create listing")
+        // console.log(req.params);
+        // console.log(req.session.redirectUrl);
+        if(req.params.id) {
+            req.session.listingId = req.params.id;
+            req.flash("error", "Need to be logged in for editing listing!")
+        } else {
+            req.flash("error", "You must be logged in to create listing!")
+        }
         return res.redirect("/login");
     }
     next();
@@ -18,8 +25,13 @@ module.exports.isLoggedIn = (req,res,next) => {
 
 module.exports.savedRedirectUrl = (req,res,next) => {
     if(req.session.redirectUrl) {
-        res.locals.redirectUrl = req.session.redirectUrl;
+        if (req.session.listingId) {
+            res.locals.redirectUrl = `/listings/${req.session.listingId}`;
+            // console.log(res.locals.redirectUrl);
+        } else {
+            res.locals.redirectUrl = req.session.redirectUrl;
         // console.log(res.locals.redirectUrl);
+        }
     }
     next();
 }

@@ -45,6 +45,7 @@ router.post("/login",
         req.flash("success", "Welcome back to WanderLust!");
         // console.log(res.locals.redirectUrl);
         let redirectUrl = res.locals.redirectUrl || "/listings";
+        // console.log(redirectUrl);
         res.redirect(redirectUrl);
     }
 );
