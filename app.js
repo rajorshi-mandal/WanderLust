@@ -91,6 +91,10 @@ app.use((req,res,next) => {
     next();
 });
 
+app.get("/", (req,res) => {
+    res.redirect("/listings");
+});
+
 // app.get("/demouser", async (req,res) => {
 //     let fakeuser = new User({
 //         email : "student@gmail.com",
